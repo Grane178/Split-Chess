@@ -47,10 +47,6 @@
             margin: 20px 0;
             font-size: 18px;
         }
-        .controls {
-            text-align: center;
-            margin: 20px 0;
-        }
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -64,52 +60,164 @@
         button:hover {
             background-color: #45a049;
         }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .capacity-hint {
+            font-size: 10px;
+            color: #666;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+        }
+        .cell {
+            position: relative;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>🎮 棋盘游戏</h1>
-        <div class="game-info" id="gameInfo">红方先行 - 界面优化中</div>
+        <div class="game-info" id="gameInfo">红方先行 - 交互框架测试</div>
         
         <div class="board" id="board">
             <!-- 动态生成棋盘格子 -->
-            <div class="cell empty" data-x="1" data-y="1">1,1</div>
-            <div class="cell empty" data-x="2" data-y="1">2,1</div>
-            <div class="cell empty" data-x="3" data-y="1">3,1</div>
-            <div class="cell empty" data-x="4" data-y="1">4,1</div>
-            <div class="cell empty" data-x="1" data-y="2">1,2</div>
-            <div class="cell empty" data-x="2" data-y="2">2,2</div>
-            <div class="cell empty" data-x="3" data-y="2">3,2</div>
-            <div class="cell empty" data-x="4" data-y="2">4,2</div>
-            <div class="cell empty" data-x="1" data-y="3">1,3</div>
-            <div class="cell empty" data-x="2" data-y="3">2,3</div>
-            <div class="cell empty" data-x="3" data-y="3">3,3</div>
-            <div class="cell empty" data-x="4" data-y="3">4,3</div>
-            <div class="cell empty" data-x="1" data-y="4">1,4</div>
-            <div class="cell empty" data-x="2" data-y="4">2,4</div>
-            <div class="cell empty" data-x="3" data-y="4">3,4</div>
-            <div class="cell empty" data-x="4" data-y="4">4,4</div>
+            <div class="cell empty" data-x="1" data-y="1">
+                1,1
+                <div class="capacity-hint">2</div>
+            </div>
+            <div class="cell empty" data-x="2" data-y="1">
+                2,1
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="3" data-y="1">
+                3,1
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="4" data-y="1">
+                4,1
+                <div class="capacity-hint">2</div>
+            </div>
+            <div class="cell empty" data-x="1" data-y="2">
+                1,2
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="2" data-y="2">
+                2,2
+                <div class="capacity-hint">4</div>
+            </div>
+            <div class="cell empty" data-x="3" data-y="2">
+                3,2
+                <div class="capacity-hint">4</div>
+            </div>
+            <div class="cell empty" data-x="4" data-y="2">
+                4,2
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="1" data-y="3">
+                1,3
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="2" data-y="3">
+                2,3
+                <div class="capacity-hint">4</div>
+            </div>
+            <div class="cell empty" data-x="3" data-y="3">
+                3,3
+                <div class="capacity-hint">4</div>
+            </div>
+            <div class="cell empty" data-x="4" data-y="3">
+                4,3
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="1" data-y="4">
+                1,4
+                <div class="capacity-hint">2</div>
+            </div>
+            <div class="cell empty" data-x="2" data-y="4">
+                2,4
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="3" data-y="4">
+                3,4
+                <div class="capacity-hint">3</div>
+            </div>
+            <div class="cell empty" data-x="4" data-y="4">
+                4,4
+                <div class="capacity-hint">2</div>
+            </div>
         </div>
         
         <div class="controls">
-            <button onclick="alert('重置功能开发中...')">重新开始</button>
-            <button onclick="alert('游戏规则开发中...')">游戏规则</button>
+            <button id="resetBtn">重新开始</button>
+            <button id="rulesBtn">游戏规则</button>
+            <button id="testBtn">测试交互</button>
         </div>
     </div>
 
     <script>
-        console.log('棋盘游戏前端样式优化完成');
-        // 后续将集成 WebAssembly 模块
+        // 基础交互框架
+        console.log('棋盘游戏前端交互框架加载完成');
         
-        // 基础交互
-        document.querySelectorAll('.cell').forEach(cell => {
+        let currentPlayer = 'red';
+        
+        // 棋盘点击事件
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
             cell.addEventListener('click', function() {
                 const x = this.getAttribute('data-x');
                 const y = this.getAttribute('data-y');
-                console.log(`点击了格子: (${x}, ${y})`);
-                alert(`点击了位置 (${x}, ${y}) - 交互逻辑开发中`);
+                console.log(`点击了格子: (${x}, ${y}), 当前玩家: ${currentPlayer}`);
+                
+                // 临时交互效果 - 模拟棋子放置
+                if (this.classList.contains('empty')) {
+                    this.classList.remove('empty');
+                    if (currentPlayer === 'red') {
+                        this.classList.add('red');
+                        this.innerHTML = '🔴<div class="capacity-hint">1</div>';
+                        currentPlayer = 'black';
+                    } else {
+                        this.classList.add('black');
+                        this.innerHTML = '⚫<div class="capacity-hint">1</div>';
+                        currentPlayer = 'red';
+                    }
+                    updateGameInfo();
+                }
             });
         });
+        
+        // 按钮事件
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            cells.forEach(cell => {
+                cell.classList.remove('red', 'black');
+                cell.classList.add('empty');
+                const x = cell.getAttribute('data-x');
+                const y = cell.getAttribute('data-y');
+                const capacity = cell.querySelector('.capacity-hint').textContent;
+                cell.innerHTML = `${x},${y}<div class="capacity-hint">${capacity}</div>`;
+            });
+            currentPlayer = 'red';
+            updateGameInfo();
+            console.log('游戏重置');
+        });
+        
+        document.getElementById('rulesBtn').addEventListener('click', function() {
+            alert('游戏规则:\\n\\n1. 红方先行，双方轮流放置棋子\\n2. 棋子达到容量上限会分裂\\n3. 消灭对方棋子获胜\\n\\n💡 角落容量:2, 边缘:3, 中间:4');
+        });
+        
+        document.getElementById('testBtn').addEventListener('click', function() {
+            console.log('前端交互框架测试成功！');
+            alert('交互框架测试：点击棋盘格子可以放置棋子，支持玩家切换！');
+        });
+        
+        function updateGameInfo() {
+            const playerText = currentPlayer === 'red' ? '🔴 红方' : '⚫ 黑方';
+            document.getElementById('gameInfo').textContent = 
+                `当前玩家: ${playerText} - 交互框架测试中`;
+        }
+        
+        updateGameInfo();
     </script>
 </body>
 </html>
