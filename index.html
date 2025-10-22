@@ -74,150 +74,280 @@
         .cell {
             position: relative;
         }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>🎮 棋盘游戏</h1>
-        <div class="game-info" id="gameInfo">红方先行 - 交互框架测试</div>
-        
-        <div class="board" id="board">
-            <!-- 动态生成棋盘格子 -->
-            <div class="cell empty" data-x="1" data-y="1">
-                1,1
-                <div class="capacity-hint">2</div>
-            </div>
-            <div class="cell empty" data-x="2" data-y="1">
-                2,1
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="3" data-y="1">
-                3,1
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="4" data-y="1">
-                4,1
-                <div class="capacity-hint">2</div>
-            </div>
-            <div class="cell empty" data-x="1" data-y="2">
-                1,2
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="2" data-y="2">
-                2,2
-                <div class="capacity-hint">4</div>
-            </div>
-            <div class="cell empty" data-x="3" data-y="2">
-                3,2
-                <div class="capacity-hint">4</div>
-            </div>
-            <div class="cell empty" data-x="4" data-y="2">
-                4,2
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="1" data-y="3">
-                1,3
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="2" data-y="3">
-                2,3
-                <div class="capacity-hint">4</div>
-            </div>
-            <div class="cell empty" data-x="3" data-y="3">
-                3,3
-                <div class="capacity-hint">4</div>
-            </div>
-            <div class="cell empty" data-x="4" data-y="3">
-                4,3
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="1" data-y="4">
-                1,4
-                <div class="capacity-hint">2</div>
-            </div>
-            <div class="cell empty" data-x="2" data-y="4">
-                2,4
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="3" data-y="4">
-                3,4
-                <div class="capacity-hint">3</div>
-            </div>
-            <div class="cell empty" data-x="4" data-y="4">
-                4,4
-                <div class="capacity-hint">2</div>
-            </div>
+        <div class="game-info" id="gameInfo">
+            <div class="loading">加载WASM模块中...</div>
         </div>
-        
+        <div class="board" id="board"></div>
         <div class="controls">
             <button id="resetBtn">重新开始</button>
             <button id="rulesBtn">游戏规则</button>
-            <button id="testBtn">测试交互</button>
+            <button id="debugBtn">调试信息</button>
         </div>
     </div>
 
-    <script>
-        // 基础交互框架
-        console.log('棋盘游戏前端交互框架加载完成');
+    <script type="module">
+        // 模拟WASM导入（实际需要构建后使用）
+        console.log('开始加载游戏前端...');
         
-        let currentPlayer = 'red';
+        let game = null;
         
-        // 棋盘点击事件
-        const cells = document.querySelectorAll('.cell');
-        cells.forEach(cell => {
-            cell.addEventListener('click', function() {
-                const x = this.getAttribute('data-x');
-                const y = this.getAttribute('data-y');
-                console.log(`点击了格子: (${x}, ${y}), 当前玩家: ${currentPlayer}`);
+        // 模拟WASM模块
+        class MockWebGame {
+            constructor() {
+                console.log('MockWebGame 初始化');
+                this.rounds = 0;
+                this.redCount = 0;
+                this.blackCount = 0;
+                this.currentPlayer = 'red';
+                this.board = this.createEmptyBoard();
+            }
+            
+            createEmptyBoard() {
+                return Array(4).fill().map(() => 
+                    Array(4).fill().map(() => ({ color: 'E', count: 0 }))
+                );
+            }
+            
+            make_move(x, y) {
+                console.log(`模拟移动: (${x}, ${y})`);
                 
-                // 临时交互效果 - 模拟棋子放置
-                if (this.classList.contains('empty')) {
-                    this.classList.remove('empty');
-                    if (currentPlayer === 'red') {
-                        this.classList.add('red');
-                        this.innerHTML = '🔴<div class="capacity-hint">1</div>';
-                        currentPlayer = 'black';
-                    } else {
-                        this.classList.add('black');
-                        this.innerHTML = '⚫<div class="capacity-hint">1</div>';
-                        currentPlayer = 'red';
-                    }
-                    updateGameInfo();
+                if (x < 1 || x > 4 || y < 1 || y > 4) {
+                    return 'error:坐标必须在1-4范围内！';
                 }
-            });
-        });
-        
-        // 按钮事件
-        document.getElementById('resetBtn').addEventListener('click', function() {
-            cells.forEach(cell => {
-                cell.classList.remove('red', 'black');
-                cell.classList.add('empty');
-                const x = cell.getAttribute('data-x');
-                const y = cell.getAttribute('data-y');
-                const capacity = cell.querySelector('.capacity-hint').textContent;
-                cell.innerHTML = `${x},${y}<div class="capacity-hint">${capacity}</div>`;
-            });
-            currentPlayer = 'red';
-            updateGameInfo();
-            console.log('游戏重置');
-        });
-        
-        document.getElementById('rulesBtn').addEventListener('click', function() {
-            alert('游戏规则:\\n\\n1. 红方先行，双方轮流放置棋子\\n2. 棋子达到容量上限会分裂\\n3. 消灭对方棋子获胜\\n\\n💡 角落容量:2, 边缘:3, 中间:4');
-        });
-        
-        document.getElementById('testBtn').addEventListener('click', function() {
-            console.log('前端交互框架测试成功！');
-            alert('交互框架测试：点击棋盘格子可以放置棋子，支持玩家切换！');
-        });
-        
-        function updateGameInfo() {
-            const playerText = currentPlayer === 'red' ? '🔴 红方' : '⚫ 黑方';
-            document.getElementById('gameInfo').textContent = 
-                `当前玩家: ${playerText} - 交互框架测试中`;
+                
+                const boardX = 4 - y;
+                const boardY = x - 1;
+                
+                const cell = this.board[boardX][boardY];
+                if (cell.color !== 'E' && cell.color !== this.currentPlayer[0]) {
+                    return 'error:无效的移动！';
+                }
+                
+                cell.color = this.currentPlayer[0];
+                cell.count += 1;
+                
+                if (this.currentPlayer === 'red') {
+                    this.redCount += 1;
+                } else {
+                    this.blackCount += 1;
+                }
+                
+                this.rounds += 1;
+                this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
+                
+                return 'playing';
+            }
+            
+            get_board_state() {
+                let result = '';
+                for (let row = 0; row < 4; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const cell = this.board[row][col];
+                        result += `${cell.color}${cell.count}|`;
+                    }
+                    result += '\n';
+                }
+                return result;
+            }
+            
+            get_game_info() {
+                return `${this.rounds}|${this.redCount}|${this.blackCount}|${this.currentPlayer}`;
+            }
+            
+            reset() {
+                console.log('模拟游戏重置');
+                this.rounds = 0;
+                this.redCount = 0;
+                this.blackCount = 0;
+                this.currentPlayer = 'red';
+                this.board = this.createEmptyBoard();
+            }
         }
         
-        updateGameInfo();
+        async function run() {
+            try {
+                // 模拟WASM初始化
+                await new Promise(resolve => setTimeout(resolve, 500));
+                game = new MockWebGame();
+                console.log('游戏初始化成功（模拟模式）');
+                updateDisplay();
+                setupEventListeners();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                alert('WASM加载失败，使用模拟模式');
+                game = new MockWebGame();
+                updateDisplay();
+                setupEventListeners();
+            }
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('rulesBtn').addEventListener('click', showRules);
+            document.getElementById('debugBtn').addEventListener('click', showDebugInfo);
+        }
+        
+        function updateDisplay() {
+            if (!game) {
+                console.error('游戏未初始化');
+                return;
+            }
+            
+            try {
+                const boardState = game.get_board_state();
+                const gameInfo = game.get_game_info();
+                
+                renderBoard(boardState);
+                renderGameInfo(gameInfo);
+            } catch (error) {
+                console.error('更新显示失败:', error);
+            }
+        }
+        
+        function renderBoard(boardState) {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            
+            const rows = boardState.trim().split('\n');
+            rows.forEach((row, rowIndex) => {
+                const cells = row.split('|').filter(cell => cell.length > 0);
+                cells.forEach((cell, colIndex) => {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = 'cell';
+                    
+                    cellElement.addEventListener('click', () => makeMove(colIndex + 1, 4 - rowIndex));
+                    
+                    const color = cell[0];
+                    const num = cell.substring(1);
+                    
+                    if (color === 'R') {
+                        cellElement.classList.add('red');
+                        cellElement.textContent = `🔴 ${num}`;
+                    } else if (color === 'B') {
+                        cellElement.classList.add('black');
+                        cellElement.textContent = `⚫ ${num}`;
+                    } else {
+                        cellElement.classList.add('empty');
+                        cellElement.textContent = '';
+                        
+                        // 显示容量提示
+                        const maxCapacity = getMaxCapacity(rowIndex, colIndex);
+                        const capacityHint = document.createElement('div');
+                        capacityHint.className = 'capacity-hint';
+                        capacityHint.textContent = maxCapacity;
+                        cellElement.appendChild(capacityHint);
+                    }
+                    
+                    boardElement.appendChild(cellElement);
+                });
+            });
+        }
+
+        function getMaxCapacity(row, col) {
+            let capacity = 0;
+            if (row > 0) capacity++;
+            if (col > 0) capacity++;
+            if (row < 3) capacity++;
+            if (col < 3) capacity++;
+            return capacity;
+        }
+        
+        function renderGameInfo(gameInfo) {
+            const [rounds, redCount, blackCount, currentPlayer] = gameInfo.split('|');
+            const infoElement = document.getElementById('gameInfo');
+            
+            const playerText = currentPlayer === 'red' ? '🔴 红方' : '⚫ 黑方';
+            infoElement.innerHTML = `
+                <strong>当前玩家: ${playerText}</strong> | 
+                回合: ${rounds} | 
+                红方: ${redCount} | 
+                黑方: ${blackCount}
+            `;
+        }
+        
+        function makeMove(x, y) {
+            if (!game) {
+                console.error('游戏未初始化');
+                return;
+            }
+            
+            try {
+                console.log(`尝试移动到 (${x}, ${y})`);
+                const result = game.make_move(x, y);
+                console.log('移动结果:', result);
+                
+                if (result.startsWith('error:')) {
+                    alert(result.substring(6));
+                    return;
+                }
+                
+                updateDisplay();
+                
+                if (result === 'red_wins') {
+                    setTimeout(() => alert('🎉 红方获胜！'), 100);
+                } else if (result === 'black_wins') {
+                    setTimeout(() => alert('🎉 黑方获胜！'), 100);
+                } else if (result === 'draw') {
+                    setTimeout(() => alert('🤝 游戏平局！'), 100);
+                }
+            } catch (error) {
+                console.error('移动失败:', error);
+                alert('移动失败，请重试');
+            }
+        }
+        
+        function resetGame() {
+            if (!game) {
+                console.error('游戏未初始化');
+                return;
+            }
+            
+            try {
+                console.log('重置游戏');
+                game.reset();
+                updateDisplay();
+            } catch (error) {
+                console.error('重置失败:', error);
+                alert('重置失败，请刷新页面');
+            }
+        }
+        
+        function showRules() {
+            alert(`🎮 游戏规则:
+
+1. 红方先行，双方轮流在格子中放置棋子
+2. 当格子中的棋子数量达到其容量上限时会分裂到相邻格子
+3. 分裂的棋子会将目标格子转换为己方颜色
+4. 消灭对方所有棋子即可获胜
+
+💡 提示:
+• 角落格子容量为2
+• 边缘格子容量为3  
+• 中间格子容量为4
+• 点击格子放置棋子`);
+        }
+        
+        function showDebugInfo() {
+            if (game) {
+                const boardState = game.get_board_state();
+                const gameInfo = game.get_game_info();
+                console.log('调试信息:', { boardState, gameInfo });
+                alert(`调试信息已输出到控制台\n当前状态: ${gameInfo}`);
+            }
+        }
+        
+        // 启动游戏
+        run();
     </script>
 </body>
 </html>
