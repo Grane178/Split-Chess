@@ -145,3 +145,28 @@ impl Default for Board {
         Self::new()
     }
 }
+impl Board {
+    fn split_at(&mut self, x: usize, y: usize, color: Color) {
+        println!("执行分裂: 位置({}, {}), 颜色{:?}", x, y, color);
+        
+        // 临时实现：简单的重置逻辑
+        self.num[x][y] = 0;
+        self.camp[x][y] = Color::Empty;
+        
+        // 更新棋子计数
+        match color {
+            Color::Red => self.redcount -= 1,
+            Color::Black => self.blackcount -= 1,
+            _ => {}
+        }
+        
+        // 分裂逻辑将在后续完善
+        // TODO: 实现完整的分裂到相邻格子的逻辑
+    }
+    
+    // 添加一个测试方法用于验证游戏状态
+    pub fn debug_info(&self) -> String {
+        format!("回合: {}, 红方: {}, 黑方: {}, 当前玩家: {:?}", 
+                self.rounds, self.redcount, self.blackcount, self.currentplayer)
+    }
+}
