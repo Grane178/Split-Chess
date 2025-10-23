@@ -94,7 +94,6 @@ impl Board {
                 return GameState::BlackWins;
             }
             if self.rounds > 200 {
-                // 防止无限游戏
                 return GameState::Draw;
             }
         }
@@ -130,43 +129,102 @@ impl Board {
 
         self.rounds += 1;
 
-        // 简单的分裂逻辑（后续会完善）
+        // 检查是否触发分裂
         if self.num[x][y] >= self.maxnum[x][y] {
-            // 分裂逻辑待实现
-            println!("触发分裂！位置: ({}, {})", x, y);
+            self.split_at(x, y, self.currentplayer);
         }
 
         true
+    }
+
+    // 完整的分裂逻辑实现
+    fn split_at(&mut self, x: usize, y: usize, color: Color) {
+        use std::collections::VecDeque;
+        let mut positions_to_split = VecDeque::new();
+        positions_to_split.push_back((x, y));
+
+        while !positions_to_split.is_empty() {
+            let (current_x, current_y) = positions_to_split.pop_front().unwrap();
+
+            if self.num[current_x][current_y] < self.maxnum[current_x][current_y] {
+                continue;
+            }
+
+            let overflow = self.num[current_x][current_y] - self.maxnum[current_x][current_y];
+            self.num[current_x][current_y] = 0;
+            self.camp[current_x][current_y] = Color::Empty;
+
+            // 更新棋子计数
+            match color {
+                Color::Red => self.redcount -= 1,
+                Color::Black => self.blackcount -= 1,
+                _ => {}
+            }
+
+            let dx = [-1, 0, 1, 0];
+            let dy = [0, 1, 0, -1];
+
+            let mut remaining_overflow = overflow;
+
+            // 向四个方向分裂
+            for i in 0..4 {
+                let nx = current_x as i32 + dx[i];
+                let ny = current_y as i32 + dy[i];
+
+                if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
+                    let nx = nx as usize;
+                    let ny = ny as usize;
+
+                    // 处理棋子转换
+                    if self.camp[nx][ny] != color && self.camp[nx][ny] != Color::Empty {
+                        match (color, self.camp[nx][ny]) {
+                            (Color::Red, Color::Black) => {
+                                self.redcount += self.num[nx][ny];
+                                self.blackcount -= self.num[nx][ny];
+                            }
+                            (Color::Black, Color::Red) => {
+                                self.redcount -= self.num[nx][ny];
+                                self.blackcount += self.num[nx][ny];
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    // 增加棋子数量
+                    if remaining_overflow > 0 {
+                        self.num[nx][ny] += 2;
+                        remaining_overflow -= 1;
+                    } else {
+                        self.num[nx][ny] += 1;
+                    }
+
+                    self.camp[nx][ny] = color;
+
+                    // 更新棋子计数
+                    match color {
+                        Color::Red => self.redcount += 1,
+                        Color::Black => self.blackcount += 1,
+                        _ => {}
+                    }
+
+                    // 检查是否触发新的分裂
+                    if self.num[nx][ny] >= self.maxnum[nx][ny] {
+                        positions_to_split.push_back((nx, ny));
+                    }
+                }
+            }
+        }
+    }
+
+    // 调试信息方法
+    pub fn debug_info(&self) -> String {
+        format!("回合: {}, 红方: {}, 黑方: {}, 当前玩家: {:?}", 
+                self.rounds, self.redcount, self.blackcount, self.currentplayer)
     }
 }
 
 impl Default for Board {
     fn default() -> Self {
         Self::new()
-    }
-}
-impl Board {
-    fn split_at(&mut self, x: usize, y: usize, color: Color) {
-        println!("执行分裂: 位置({}, {}), 颜色{:?}", x, y, color);
-        
-        // 临时实现：简单的重置逻辑
-        self.num[x][y] = 0;
-        self.camp[x][y] = Color::Empty;
-        
-        // 更新棋子计数
-        match color {
-            Color::Red => self.redcount -= 1,
-            Color::Black => self.blackcount -= 1,
-            _ => {}
-        }
-        
-        // 分裂逻辑将在后续完善
-        // TODO: 实现完整的分裂到相邻格子的逻辑
-    }
-    
-    // 添加一个测试方法用于验证游戏状态
-    pub fn debug_info(&self) -> String {
-        format!("回合: {}, 红方: {}, 黑方: {}, 当前玩家: {:?}", 
-                self.rounds, self.redcount, self.blackcount, self.currentplayer)
     }
 }
