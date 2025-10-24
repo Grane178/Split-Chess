@@ -228,3 +228,42 @@ impl Default for Board {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_board_initialization() {
+        let board = Board::new();
+        assert_eq!(board.rounds, 0);
+        assert_eq!(board.redcount, 0);
+        assert_eq!(board.blackcount, 0);
+        assert_eq!(board.currentplayer, Color::Red);
+    }
+
+    #[test]
+    fn test_valid_move() {
+        let mut board = Board::new();
+        let result = board.make_move(1, 1);
+        assert!(result.is_ok());
+        assert_eq!(board.redcount, 1);
+    }
+
+    #[test]
+    fn test_invalid_move() {
+        let mut board = Board::new();
+        let result = board.make_move(5, 5); // 无效坐标
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_player_switch() {
+        let mut board = Board::new();
+        let _ = board.make_move(1, 1);
+        assert_eq!(board.currentplayer, Color::Black);
+        
+        let _ = board.make_move(2, 2);
+        assert_eq!(board.currentplayer, Color::Red);
+    }
+}
