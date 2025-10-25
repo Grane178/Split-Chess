@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>棋盘游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .game-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            grid-gap: 2px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .cell {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .cell:hover {
+            background-color: #e0e0e0;
+        }
+        .red { background-color: #ffcccc; }
+        .black { background-color: #cccccc; }
+        .empty { background-color: #f9f9f9; }
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .capacity-hint {
+            font-size: 10px;
+            color: #666;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+        }
+        .cell {
+            position: relative;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 棋盘游戏</h1>
+        <div class="game-info" id="gameInfo">
+            <div class="loading">加载WASM模块中...</div>
+        </div>
+        <div class="board" id="board"></div>
+        <div class="controls">
+            <button id="resetBtn">重新开始</button>
+            <button id="rulesBtn">游戏规则</button>
+            <button id="debugBtn">调试信息</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // 模拟WASM导入（实际需要构建后使用）
+        console.log('开始加载游戏前端...');
+        
+        let game = null;
+        
+        // 模拟WASM模块
+        class MockWebGame {
+            constructor() {
+                console.log('MockWebGame 初始化');
+                this.rounds = 0;
+                this.redCount = 0;
+                this.blackCount = 0;
+                this.currentPlayer = 'red';
+                this.board = this.createEmptyBoard();
+            }
+            
+            createEmptyBoard() {
+                return Array(4).fill().map(() => 
+                    Array(4).fill().map(() => ({ color: 'E', count: 0 }))
+                );
+            }
+            
+            make_move(x, y) {
+                console.log(`模拟移动: (${x}, ${y})`);
+                
+                if (x < 1 || x > 4 || y < 1 || y > 4) {
+                    return 'error:坐标必须在1-4范围内！';
+                }
+                
+                const boardX = 4 - y;
+                const boardY = x - 1;
+                
+                const cell = this.board[boardX][boardY];
+                if (cell.color !== 'E' && cell.color !== this.currentPlayer[0]) {
+                    return 'error:无效的移动！';
+                }
+                
+                cell.color = this.currentPlayer[0];
+                cell.count += 1;
+                
+                if (this.currentPlayer === 'red') {
+                    this.redCount += 1;
+                } else {
+                    this.blackCount += 1;
+                }
+                
+                this.rounds += 1;
+                this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
+                
+                return 'playing';
+            }
+            
+            get_board_state() {
+                let result = '';
+                for (let row = 0; row < 4; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const cell = this.board[row][col];
+                        result += `${cell.color}${cell.count}|`;
+                    }
+                    result += '\n';
+                }
+                return result;
+            }
+            
+            get_game_info() {
+                return `${this.rounds}|${this.redCount}|${this.blackCount}|${this.currentPlayer}`;
+            }
+            
+            reset() {
+                console.log('模拟游戏重置');
+                this.rounds = 0;
+                this.redCount = 0;
+                this.blackCount = 0;
+                this.currentPlayer = 'red';
+                this.board = this.createEmptyBoard();
+            }
+        }
+        
+        async function run() {
+            try {
+                // 模拟WASM初始化
+                await new Promise(resolve => setTimeout(resolve, 500));
+                game = new MockWebGame();
+                console.log('游戏初始化成功（模拟模式）');
+                updateDisplay();
+                setupEventListeners();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                alert('WASM加载失败，使用模拟模式');
+                game = new MockWebGame();
+                updateDisplay();
+                setupEventListeners();
+            }
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('rulesBtn').addEventListener('click', showRules);
+            document.getElementById('debugBtn').addEventListener('click', showDebugInfo);
+        }
+        
+        function updateDisplay() {
+            if (!game) {
+                console.error('游戏未初始化');
+                return;
+            }
+            
+            try {
+                const boardState = game.get_board_state();
+                const gameInfo = game.get_game_info();
+                
+                renderBoard(boardState);
+                renderGameInfo(gameInfo);
+            } catch (error) {
+                console.error('更新显示失败:', error);
+            }
+        }
+        
+        function renderBoard(boardState) {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            
+            const rows = boardState.trim().split('\n');
+            rows.forEach((row, rowIndex) => {
+                const cells = row.split('|').filter(cell => cell.length > 0);
+                cells.forEach((cell, colIndex) => {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = 'cell';
+                    
+                    cellElement.addEventListener('click', () => makeMove(colIndex + 1, 4 - rowIndex));
+                    
+                    const color = cell[0];
+                    const num = cell.substring(1);
+                    
+                    if (color === 'R') {
+                        cellElement.classList.add('red');
+                        cellElement.textContent = `🔴 ${num}`;
+                    } else if (color === 'B') {
+                        cellElement.classList.add('black');
+                        cellElement.textContent = `⚫ ${num}`;
+                    } else {
+                        cellElement.classList.add('empty');
+                        cellElement.textContent = '';
+                        
+                        // 显示容量提示
+                        const maxCapacity = getMaxCapacity(rowIndex, colIndex);
+                        const capacityHint = document.createElement('div');
+                        capacityHint.className = 'capacity-hint';
+                        capacityHint.textContent = maxCapacity;
+                        cellElement.appendChild(capacityHint);
+                    }
+                    
+                    boardElement.appendChild(cellElement);
+                });
+            });
+        }
+
+        function getMaxCapacity(row, col) {
+            let capacity = 0;
+            if (row > 0) capacity++;
+            if (col > 0) capacity++;
+            if (row < 3) capacity++;
+            if (col < 3) capacity++;
+            return capacity;
+        }
+        
+        function renderGameInfo(gameInfo) {
+            const [rounds, redCount, blackCount, currentPlayer] = gameInfo.split('|');
+            const infoElement = document.getElementById('gameInfo');
+            
+            const playerText = currentPlayer === 'red' ? '🔴 红方' : '⚫ 黑方';
+            infoElement.innerHTML = `
+                <strong>当前玩家: ${playerText}</strong> | 
+                回合: ${rounds} | 
+                红方: ${redCount} | 
+                黑方: ${blackCount}
+            `;
+        }
+        
+        function makeMove(x, y) {
+            if (!game) {
+                console.error('游戏未初始化');
+                return;
+            }
+            
+            try {
+                console.log(`尝试移动到 (${x}, ${y})`);
+                const result = game.make_move(x, y);
+                console.log('移动结果:', result);
+                
+                if (result.startsWith('error:')) {
+                    alert(result.substring(6));
+                    return;
+                }
+                
+                updateDisplay();
+                
+                if (result === 'red_wins') {
+                    setTimeout(() => alert('🎉 红方获胜！'), 100);
+                } else if (result === 'black_wins') {
+                    setTimeout(() => alert('🎉 黑方获胜！'), 100);
+                } else if (result === 'draw') {
+                    setTimeout(() => alert('🤝 游戏平局！'), 100);
+                }
+            } catch (error) {
+                console.error('移动失败:', error);
+                alert('移动失败，请重试');
+            }
+        }
+        
+        function resetGame() {
+            if (!game) {
+                console.error('游戏未初始化');
+                return;
+            }
+            
+            try {
+                console.log('重置游戏');
+                game.reset();
+                updateDisplay();
+            } catch (error) {
+                console.error('重置失败:', error);
+                alert('重置失败，请刷新页面');
+            }
+        }
+        
+        function showRules() {
+            alert(`🎮 游戏规则:
+
+1. 红方先行，双方轮流在格子中放置棋子
+2. 当格子中的棋子数量达到其容量上限时会分裂到相邻格子
+3. 分裂的棋子会将目标格子转换为己方颜色
+4. 消灭对方所有棋子即可获胜
+
+💡 提示:
+• 角落格子容量为2
+• 边缘格子容量为3  
+• 中间格子容量为4
+• 点击格子放置棋子`);
+        }
+        
+        function showDebugInfo() {
+            if (game) {
+                const boardState = game.get_board_state();
+                const gameInfo = game.get_game_info();
+                console.log('调试信息:', { boardState, gameInfo });
+                alert(`调试信息已输出到控制台\n当前状态: ${gameInfo}`);
+            }
+        }
+        
+        // 启动游戏
+        run();
+    </script>
+</body>
+</html>

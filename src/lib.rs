@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pub const BOARD_SIZE: usize = 4;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -267,3 +268,9 @@ mod tests {
         assert_eq!(board.currentplayer, Color::Red);
     }
 }
+
+pub mod web;
+
+// 为WASM目标导出web模块
+#[cfg(target_arch = "wasm32")]
+pub use web::*;
