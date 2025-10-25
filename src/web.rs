@@ -5,6 +5,7 @@ use crate::{Board, GameState, Color, BOARD_SIZE};
 #[wasm_bindgen]
 extern "C" {
     fn alert(s: &str);
+    
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
@@ -24,9 +25,7 @@ pub struct WebGame {
 impl WebGame {
     #[wasm_bindgen(constructor)]
     pub fn new() -> WebGame {
-        unsafe{
-            console_log!("创建新游戏");
-        }
+        unsafe{console_log!("创建新游戏");}
         WebGame {
             board: Board::new(),
         }
@@ -34,41 +33,12 @@ impl WebGame {
 
     #[wasm_bindgen]
     pub fn make_move(&mut self, x: usize, y: usize) -> String {
-        unsafe {
-            console_log!("尝试移动: ({}, {})", x, y);
-        }
-        
         match self.board.make_move(x, y) {
-            Ok(GameState::Playing) => {
-                unsafe {
-                    console_log!("移动成功，游戏继续");
-                }
-                "playing".to_string()
-            }
-            Ok(GameState::RedWins) => {
-                unsafe {
-                    console_log!("红方获胜！");
-                }
-                "red_wins".to_string()
-            }
-            Ok(GameState::BlackWins) => {
-                unsafe {
-                    console_log!("黑方获胜！");
-                }
-                "black_wins".to_string()
-            }
-            Ok(GameState::Draw) => {
-                unsafe {
-                    console_log!("游戏平局！");
-                }
-                "draw".to_string()
-            }
-            Err(e) => {
-                unsafe {
-                    console_log!("移动失败: {}", e);
-                }
-                format!("error:{}", e)
-            }
+            Ok(GameState::Playing) => "playing".to_string(),
+            Ok(GameState::RedWins) => "red_wins".to_string(),
+            Ok(GameState::BlackWins) => "black_wins".to_string(),
+            Ok(GameState::Draw) => "draw".to_string(),
+            Err(e) => format!("error:{}", e),
         }
     }
 
@@ -80,16 +50,11 @@ impl WebGame {
                 let color = match self.board.camp[row][col] {
                     Color::Red => "R",
                     Color::Black => "B",
-                    Color::Empty => ".",
+                    Color::Empty => "E",
                 };
-                result.push_str(&format!("{}{}", color, self.board.num[row][col]));
-                if col < BOARD_SIZE - 1 {
-                    result.push('|');
-                }
+                result.push_str(&format!("{}{}|", color, self.board.num[row][col]));
             }
-            if row < BOARD_SIZE - 1 {
-                result.push('\n');
-            }
+            result.push('\n');
         }
         result
     }

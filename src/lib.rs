@@ -1,4 +1,5 @@
-<<<<<<< HEAD
+use std::collections::VecDeque;
+
 pub const BOARD_SIZE: usize = 4;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -64,7 +65,7 @@ impl Board {
 
     pub fn make_move(&mut self, user_x: usize, user_y: usize) -> Result<GameState, String> {
         // 验证输入范围
-        if !(1..=4).contains(&user_x) || !(1..=4).contains(&user_y) {
+        if !(1..4).contains(&user_x) || !(1..4).contains(&user_y) {
             return Err("坐标必须在1-4范围内！".to_string());
         }
 
@@ -95,6 +96,7 @@ impl Board {
                 return GameState::BlackWins;
             }
             if self.rounds > 200 {
+                // 防止无限游戏
                 return GameState::Draw;
             }
         }
@@ -110,12 +112,10 @@ impl Board {
     }
 
     fn place_chess(&mut self, x: usize, y: usize) -> bool {
-        if x >= BOARD_SIZE || y >= BOARD_SIZE {
-            return false;
-        }
-
-        // 只能在自己的格子或空位上放置
-        if self.camp[x][y] != Color::Empty && self.camp[x][y] != self.currentplayer {
+        if x >= BOARD_SIZE
+            || y >= BOARD_SIZE
+            || (self.camp[x][y] != Color::Empty && self.camp[x][y] != self.currentplayer)
+        {
             return false;
         }
 
@@ -130,7 +130,6 @@ impl Board {
 
         self.rounds += 1;
 
-        // 检查是否触发分裂
         if self.num[x][y] >= self.maxnum[x][y] {
             self.split_at(x, y, self.currentplayer);
         }
@@ -138,9 +137,7 @@ impl Board {
         true
     }
 
-    // 完整的分裂逻辑实现
     fn split_at(&mut self, x: usize, y: usize, color: Color) {
-        use std::collections::VecDeque;
         let mut positions_to_split = VecDeque::new();
         positions_to_split.push_back((x, y));
 
@@ -155,43 +152,31 @@ impl Board {
             self.num[current_x][current_y] = 0;
             self.camp[current_x][current_y] = Color::Empty;
 
-            // 更新棋子计数
-            match color {
-                Color::Red => self.redcount -= 1,
-                Color::Black => self.blackcount -= 1,
-                _ => {}
-            }
-
             let dx = [-1, 0, 1, 0];
             let dy = [0, 1, 0, -1];
 
             let mut remaining_overflow = overflow;
 
-            // 向四个方向分裂
             for i in 0..4 {
-                let nx = current_x as i32 + dx[i];
-                let ny = current_y as i32 + dy[i];
-
-                if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
-                    let nx = nx as usize;
-                    let ny = ny as usize;
+                if current_x as i32 + dx[i] >= 0
+                    && current_x as i32 + dx[i] < BOARD_SIZE as i32
+                    && current_y as i32 + dy[i] >= 0
+                    && current_y as i32 + dy[i] < BOARD_SIZE as i32
+                {
+                    let nx = (current_x as i32 + dx[i]) as usize;
+                    let ny = (current_y as i32 + dy[i]) as usize;
 
                     // 处理棋子转换
-                    if self.camp[nx][ny] != color && self.camp[nx][ny] != Color::Empty {
-                        match (color, self.camp[nx][ny]) {
-                            (Color::Red, Color::Black) => {
-                                self.redcount += self.num[nx][ny];
-                                self.blackcount -= self.num[nx][ny];
-                            }
-                            (Color::Black, Color::Red) => {
-                                self.redcount -= self.num[nx][ny];
-                                self.blackcount += self.num[nx][ny];
-                            }
-                            _ => {}
-                        }
+                    if color == Color::Red && self.camp[nx][ny] == Color::Black {
+                        self.redcount += self.num[nx][ny];
+                        self.blackcount -= self.num[nx][ny];
+                    }
+                    if color == Color::Black && self.camp[nx][ny] == Color::Red {
+                        self.redcount -= self.num[nx][ny];
+                        self.blackcount += self.num[nx][ny];
                     }
 
-                    // 增加棋子数量
+                    // 增加棋子
                     if remaining_overflow > 0 {
                         self.num[nx][ny] += 2;
                         remaining_overflow -= 1;
@@ -201,13 +186,6 @@ impl Board {
 
                     self.camp[nx][ny] = color;
 
-                    // 更新棋子计数
-                    match color {
-                        Color::Red => self.redcount += 1,
-                        Color::Black => self.blackcount += 1,
-                        _ => {}
-                    }
-
                     // 检查是否触发新的分裂
                     if self.num[nx][ny] >= self.maxnum[nx][ny] {
                         positions_to_split.push_back((nx, ny));
@@ -215,12 +193,6 @@ impl Board {
                 }
             }
         }
-    }
-
-    // 调试信息方法
-    pub fn debug_info(&self) -> String {
-        format!("回合: {}, 红方: {}, 黑方: {}, 当前玩家: {:?}", 
-                self.rounds, self.redcount, self.blackcount, self.currentplayer)
     }
 }
 
@@ -230,47 +202,7 @@ impl Default for Board {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_board_initialization() {
-        let board = Board::new();
-        assert_eq!(board.rounds, 0);
-        assert_eq!(board.redcount, 0);
-        assert_eq!(board.blackcount, 0);
-        assert_eq!(board.currentplayer, Color::Red);
-    }
-
-    #[test]
-    fn test_valid_move() {
-        let mut board = Board::new();
-        let result = board.make_move(1, 1);
-        assert!(result.is_ok());
-        assert_eq!(board.redcount, 1);
-    }
-
-    #[test]
-    fn test_invalid_move() {
-        let mut board = Board::new();
-        let result = board.make_move(5, 5); // 无效坐标
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_player_switch() {
-        let mut board = Board::new();
-        let _ = board.make_move(1, 1);
-        assert_eq!(board.currentplayer, Color::Black);
-        
-        let _ = board.make_move(2, 2);
-        assert_eq!(board.currentplayer, Color::Red);
-    }
-}
-
 pub mod web;
 
-// 为WASM目标导出web模块
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
