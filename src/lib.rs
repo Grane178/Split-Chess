@@ -65,7 +65,7 @@ impl Board {
 
     pub fn make_move(&mut self, user_x: usize, user_y: usize) -> Result<GameState, String> {
         // 验证输入范围
-        if !(1..4).contains(&user_x) || !(1..4).contains(&user_y) {
+        if !(1..5).contains(&user_x) || !(1..5).contains(&user_y) {
             return Err("坐标必须在1-4范围内！".to_string());
         }
 
